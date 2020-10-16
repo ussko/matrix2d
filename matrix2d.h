@@ -12,6 +12,8 @@ public:
         _col_size{col_size},
         _data{new T[_row_size * _col_size]}
     {
+        for (size_t i = 0; i < _row_size * _col_size; ++i)
+            _data[i] = T{};
     }
     Matrix2d(const Matrix2d &rhs)
     :   Matrix2d(rhs._col_size, rhs._row_size)
@@ -116,7 +118,7 @@ public:
     }
 
     // addition
-    friend Matrix2d operator+(Matrix2d &lhs, Matrix2d &rhs)
+    friend Matrix2d operator+(const Matrix2d &lhs, const Matrix2d &rhs)
     {
         auto result = Matrix2d{std::max(lhs._col_size, rhs._col_size),
                                std::max(lhs._row_size, rhs._row_size)};
@@ -144,6 +146,44 @@ public:
         for (size_t row = 0; row < rhs._col_size; ++row)
             for (size_t col = 0; col < rhs._row_size; ++col)
                 data_new[row * row_size_new + col] += rhs._data[row * rhs._row_size + col];
+
+        delete [] _data;
+        _data = data_new;
+        _row_size = row_size_new;
+        _col_size = col_size_new;
+
+        return *this;
+    }
+
+    // concatenation
+    friend Matrix2d operator|(const Matrix2d &lhs, const Matrix2d &rhs)
+    {
+        auto result = Matrix2d{std::max(lhs._col_size, rhs._col_size),
+                               lhs._row_size + rhs._row_size};
+        for (size_t row = 0; row < lhs._col_size; ++row)
+            for (size_t col = 0; col < lhs._row_size; ++col)
+                result[row][col] = lhs[row][col];
+        for (size_t row = 0; row < rhs._col_size; ++row)
+            for (size_t col = 0; col < rhs._row_size; ++col)
+                result[row][lhs._row_size + col] = rhs[row][col];
+        return result;
+    }
+    Matrix2d& operator|=(const Matrix2d &rhs)
+    {
+        auto col_size_new = std::max(_col_size, rhs._col_size);
+        auto row_size_new = _row_size + rhs._row_size;
+        auto data_new = new T[row_size_new * col_size_new];
+
+        for (size_t i = 0; i < row_size_new * col_size_new; ++i)
+            data_new[i] = T{};
+
+        for (size_t row = 0; row < _col_size; ++row)
+            for (size_t col = 0; col < _row_size; ++col)
+                data_new[row * row_size_new + col] = _data[row * _row_size + col];
+
+        for (size_t row = 0; row < rhs._col_size; ++row)
+            for (size_t col = 0; col < rhs._row_size; ++col)
+                data_new[row * row_size_new + _row_size + col] = rhs._data[row * rhs._row_size + col];
 
         delete [] _data;
         _data = data_new;
